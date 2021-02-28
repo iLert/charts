@@ -35,7 +35,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - "--config=/etc/{{ .Release.Name }}/config.yaml"
-          envs:
+          env:
             - name: ILERT_API_KEY
               value: {{ required "The iLert Api Key is required" .Values.config.settings.apiKey }}
             - name: NAMESPACE
