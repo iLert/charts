@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ilert-kube-agent.fullname" . }}
+  labels:
+    {{- include "ilert-kube-agent.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ required "config.settings.port is required" .Values.config.settings.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "ilert-kube-agent.selectorLabels" . | nindent 4 }}
