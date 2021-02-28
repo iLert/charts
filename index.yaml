@@ -3,6 +3,16 @@ entries:
   ilert-kube-agent:
   - apiVersion: v2
     appVersion: 1.16.0
+    created: "2021-02-28T19:43:15.4124236Z"
+    description: ilert-kube-agent
+    digest: 4d0c47f7052386c1600a3d5d214bada3bc24c91b08c3ffdca98e7af9dcda063b
+    name: ilert-kube-agent
+    type: application
+    urls:
+    - https://github.com/iLert/charts/releases/download/ilert-kube-agent-1.0.2/ilert-kube-agent-1.0.2.tgz
+    version: 1.0.2
+  - apiVersion: v2
+    appVersion: 1.16.0
     created: "2021-02-28T19:41:09.207337952Z"
     description: ilert-kube-agent
     digest: 0379ec821dfee51736c8dcca60b1e50a4590c72f323c8ab240c39b82210f541c
@@ -21,4 +31,4 @@ entries:
     urls:
     - https://github.com/iLert/charts/releases/download/ilert-kube-agent-1.0.0/ilert-kube-agent-1.0.0.tgz
     version: 1.0.0
-generated: "2021-02-28T19:41:09.207363952Z"
+generated: "2021-02-28T19:43:15.412455502Z"
