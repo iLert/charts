@@ -47,16 +47,16 @@ spec:
               mountPath: /etc/{{ .Release.Name }}
           ports:
             - name:  http-metrics
-              containerPort: {{ .Values.service.port }}
+              containerPort: {{ .Values.config.settings.port }}
               protocol: TCP
           livenessProbe:
             httpGet:
               path: /api/health
-              port: {{ .Values.service.port }}
+              port: {{ .Values.config.settings.port }}
           readinessProbe:
             httpGet:
               path: /api/health
-              port: {{ .Values.service.port }}
+              port: {{ .Values.config.settings.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
