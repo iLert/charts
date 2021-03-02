@@ -8,7 +8,7 @@ image:
   repository: ilert/ilert-kube-agent
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: v1.4.1
+  tag: v1.5.0
 
 config:
   settings:
@@ -62,11 +62,21 @@ config:
         threshold: 10
 
       resources:
-        ## Enables resources pod alarms
+      ## Enables resources pod alarms
+      enabled: true
+      cpu:
+        ## Enables CPU resources pod alarms
         enabled: true
         ## The pod resources alarm incident priority
         priority: LOW
-        ## The pod resources percentage threshold from 1 to 100
+        ## The pod CPU resources percentage threshold from 1 to 100
+        threshold: 90
+      memory:
+        ## Enables memory resources pod alarms
+        enabled: true
+        ## The pod resources alarm incident priority
+        priority: LOW
+        ## The pod memory resources percentage threshold from 1 to 100
         threshold: 90
 
     nodes:
@@ -80,11 +90,21 @@ config:
         priority: HIGH
 
       resources:
-        ## Enables resources node alarms
+      ## Enables resources node alarms
+      enabled: true
+      cpu:
+        ## Enables CPU resources node alarms
         enabled: true
         ## The node resources alarm incident priority
         priority: LOW
-        ## The node resources percentage threshold from 1 to 100
+        ## The node CPU resources percentage threshold from 1 to 100
+        threshold: 90
+      memory:
+        ## Enables memory resources node alarms
+        enabled: true
+        ## The node resources alarm incident priority
+        priority: LOW
+        ## The node memory resources percentage threshold from 1 to 100
         threshold: 90
 
   links:
