@@ -8,7 +8,7 @@ image:
   repository: ilert/ilert-kube-agent
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: v1.5.0
+  tag: v1.7.0
 
 config:
   settings:
@@ -37,6 +37,12 @@ config:
       json: false
 
   alarms:
+    cluster:
+      ## Enables cluster alarms
+      enabled: true
+      ## The cluster alarm incident priority
+      priority: HIGH
+
     pods:
       ## Enables all pod alarms
       enabled: false
