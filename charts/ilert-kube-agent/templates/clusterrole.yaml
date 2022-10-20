@@ -1,9 +1,8 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ include "ilert-kube-agent.fullname" . }}
-  labels: 
-    {{- include "ilert-kube-agent.labels" . | nindent 4 }}
+  name: { { include "ilert-kube-agent.fullname" . } }
+  labels: { { - include "ilert-kube-agent.labels" . | nindent 4 } }
 rules:
   - apiGroups:
       - ""
@@ -33,15 +32,9 @@ rules:
       - leases
     verbs:
       - create
-  - apiGroups:
-      - "coordination.k8s.io"
-    resources:
-      - leases
-    verbs:
       - get
       - update
-    resourceNames:
-      - "{{ .Values.electionID }}"
+      - list
   - apiGroups:
       - "ilert.com"
     resources:
