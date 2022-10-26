@@ -1,8 +1,9 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: { { include "ilert-kube-agent.fullname" . } }
-  labels: { { - include "ilert-kube-agent.labels" . | nindent 4 } }
+   name: {{ include "ilert-kube-agent.fullname" . }}
+  labels: 
+    {{- include "ilert-kube-agent.labels" . | nindent 4 }}
 rules:
   - apiGroups:
       - ""
