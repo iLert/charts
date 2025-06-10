@@ -15,6 +15,9 @@ config:
     ## (REQUIRED) The iLert alert source api key
     # apiKey: <YOU-API-KEY>
 
+    ## The authorization key for ilert AI agent
+    # authorizationKey: <YOUR-AUTHORIZATION-KEY>
+
     ## Path to a kubeconfig. Only required if out-of-cluster.
     # kubeconfig: "~/.kube/config"
 
