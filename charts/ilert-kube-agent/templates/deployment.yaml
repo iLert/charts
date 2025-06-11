@@ -39,8 +39,8 @@ spec:
           env:
             - name: ILERT_API_KEY
               value: {{ required "The iLert Api Key is required" .Values.config.settings.apiKey }}
-            - name: ILERT_AUTHORIZATION_KEY
-              value: {{ .Values.config.settings.authorizationKey }}
+            - name: HTTP_AUTHORIZATION_KEY
+              value: {{ .Values.config.settings.httpAuthorizationKey }}
             - name: NAMESPACE
               valueFrom:
                 fieldRef:
