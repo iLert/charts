@@ -28,12 +28,27 @@ rules:
     verbs:
       - get
   - apiGroups:
+      - ""
+    resources:
+      - pods
+    verbs:
+      - delete
+  - apiGroups:
       - "apps"
     resources:
       - deployments
+      - statefulset
     verbs:
       - list
+      - get
       - patch
+  - apiGroups:
+      - "apps"
+    resources:
+      - deployments/scale
+    verbs:
+      - get
+      - update
   - apiGroups:
       - "coordination.k8s.io"
     resources:
