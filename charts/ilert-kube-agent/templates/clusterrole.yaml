@@ -38,9 +38,9 @@ rules:
     resources:
       - deployments
       - replicasets
-      - statefulset
+      - statefulsets
       - deployments/scale
-      - statefulset/scale
+      - statefulsets/scale
     verbs:
       - list
       - get
