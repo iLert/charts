@@ -37,17 +37,14 @@ rules:
       - "apps"
     resources:
       - deployments
+      - replicasets
       - statefulset
+      - deployments/scale
+      - statefulset/scale
     verbs:
       - list
       - get
       - patch
-  - apiGroups:
-      - "apps"
-    resources:
-      - deployments/scale
-    verbs:
-      - get
       - update
   - apiGroups:
       - "coordination.k8s.io"
