@@ -39,6 +39,8 @@ config:
       ## Enable json logs
       json: false
 
+    inClusterRoutesEnabled: false
+
   alarms:
     cluster:
       ## Enables cluster alarms
