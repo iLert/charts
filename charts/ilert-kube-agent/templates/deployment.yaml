@@ -39,7 +39,7 @@ spec:
           env:
             - name: ILERT_API_KEY
               value: {{ required "The iLert Api Key is required" .Values.config.settings.apiKey }}
-            {{- if .Values.config.settings.inClusterRoutesEnabled }}
+            {{- if .Values.inClusterRoutesEnabled }}
             - name: HTTP_AUTHORIZATION_KEY
             {{- if .Values.config.settings.httpAuthorizationKey }}
               value: {{ .Values.config.settings.httpAuthorizationKey }}

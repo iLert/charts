@@ -39,8 +39,6 @@ config:
       ## Enable json logs
       json: false
 
-    inClusterRoutesEnabled: false
-
   alarms:
     cluster:
       ## Enables cluster alarms
@@ -133,6 +131,7 @@ config:
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
+inClusterRoutesEnabled: false
 
 serviceAccount:
   # Specifies whether a service account should be created
