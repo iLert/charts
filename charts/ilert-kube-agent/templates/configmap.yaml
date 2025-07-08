@@ -6,4 +6,9 @@ metadata:
     {{- include "ilert-kube-agent.labels" . | nindent 4 }}
 data:
   config.yaml: |
-{{ toYaml .Values.config | indent 4 }}
+{{- $config := .Values.config -}}
+{{- if not .Values.inClusterRoutesEnabled -}}
+{{- $settings := omit .Values.config.settings "httpAuthorizationKey" -}}
+{{- $config := set $config "settings" $settings -}}
+{{- end }}
+{{ toYaml $config | indent 4 }}
