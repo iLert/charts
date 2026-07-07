@@ -1,0 +1,110 @@
+# Default values for the alloy chart.
+# -----------------------------------------------------------------------------
+# This deploys Grafana Alloy as a small **gateway**: a Deployment + Service that
+# OBI (and any OTLP client in the cluster) send to. Alloy batches the data and
+# forwards traces to the ilert OTLP gateway, which builds your Service Health
+# topology.
+#
+# Data flow:
+#   OBI / app SDKs  --OTLP-->  this Alloy  --OTLP/HTTPS + Bearer-->  ilert
+#
+# Functionally identical to the `otel-collector` chart — pick this one if your
+# team already standardizes on Grafana Alloy. It runs as a Deployment (not a
+# DaemonSet) because it only forwards data.
+# -----------------------------------------------------------------------------
+
+# === REQUIRED: your ilert OTLP ingest credentials =============================
+ilert:
+  # The OTLP ingest endpoint for your ilert region. Alloy's otlphttp exporter
+  # appends the OTLP path (/v1/traces) itself.
+  #   EU / default : https://otlp.ilert.com:4318
+  endpoint: "https://otlp.ilert.com:4318"
+
+  # (REQUIRED) Your ilert OTLP ingest token. Create it in the ilert UI and paste
+  # it here, or use `existingSecret` to keep it out of values. Alloy sends it as
+  # `Authorization: Bearer <token>`; ilert reads the tenant from the token.
+  token: ""
+
+  # Instead of `token`, reference a pre-created Secret holding the raw token.
+  existingSecret: ""
+  existingSecretKey: "token"
+
+image:
+  repository: grafana/alloy
+  pullPolicy: IfNotPresent
+  # Alloy publishes tags with a leading "v". Defaults to appVersion when empty.
+  # Releases: https://github.com/grafana/alloy/releases
+  tag: v1.11.3
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Gateway sizing. Two replicas so a rollout or node loss never drops the ingest
+# path.
+replicaCount: 2
+
+# OTLP ports OBI and your apps connect to. Point OBI at 4318 (HTTP, easy to
+# debug) or 4317 (gRPC, faster). 12345 is Alloy's own HTTP/UI + health port.
+ports:
+  otlpHttp: 4318
+  otlpGrpc: 4317
+  http: 12345
+
+service:
+  type: ClusterIP
+  annotations: {}
+
+# -----------------------------------------------------------------------------
+# Pipeline configuration.
+# -----------------------------------------------------------------------------
+# The Alloy config is generated from the settings above. The pipeline is:
+#
+#   otelcol.receiver.otlp   (grpc + http)    <- OBI and app SDKs
+#     -> otelcol.processor.memory_limiter    <- protect memory
+#     -> otelcol.processor.batch             <- batch for efficiency
+#     -> otelcol.exporter.otlphttp "ilert"   -> forward traces to ilert
+#
+# Only traces are forwarded to ilert, because Service Health topology is derived
+# from spans. Provide your own config via `configOverride` for anything else.
+config:
+  memoryLimiter:
+    checkInterval: "1s"
+    limitPercentage: 80
+    spikeLimitPercentage: 25
+  batch:
+    timeout: "5s"
+    sendBatchSize: 8192
+
+# Advanced: replace the ENTIRE generated Alloy config with your own. When set
+# (non-empty string), everything under `config:` above is ignored. Reference the
+# token with sys.env("ILERT_OTLP_TOKEN").
+configOverride: ""
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+extraEnv: []

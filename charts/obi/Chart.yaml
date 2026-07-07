@@ -1,0 +1,25 @@
+apiVersion: v2
+name: obi
+description: >-
+  OpenTelemetry eBPF Instrumentation (OBI) for ilert. A zero-code, kernel-level
+  DaemonSet that auto-instruments every workload on a node and emits OTLP traces
+  used to build the ilert Service Health topology.
+type: application
+
+# Chart version. Bump on every change to the chart or its templates.
+version: 0.1.0
+
+# Version of OBI (otel/ebpf-instrument) this chart deploys by default.
+# See https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation/releases
+appVersion: "0.10.0"
+
+home: https://docs.ilert.com
+sources:
+  - https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation
+keywords:
+  - opentelemetry
+  - ebpf
+  - obi
+  - tracing
+  - service-health
+  - ilert

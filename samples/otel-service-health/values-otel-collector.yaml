@@ -1,0 +1,36 @@
+# Sample values for the `otel-collector` chart (the ilert OTLP gateway).
+#
+# Install with:
+#   helm install otel-collector ilert/otel-collector \
+#     --namespace ilert-otel --create-namespace \
+#     -f values-otel-collector.yaml
+#
+# Keep the release name `otel-collector` so the in-cluster Service is reachable
+# at http://otel-collector:4318 — which is exactly where the OBI sample sends.
+
+ilert:
+  # Your ilert region's OTLP ingest endpoint (EU/default shown).
+  endpoint: "https://otlp.ilert.com:4318"
+
+  # Recommended: create the token Secret out-of-band and reference it, so the
+  # credential never lands in a values file or your shell history:
+  #
+  #   kubectl -n ilert-otel create secret generic ilert-otlp \
+  #     --from-literal=token='<YOUR-ILERT-OTLP-INGEST-TOKEN>'
+  #
+  existingSecret: "ilert-otlp"
+  existingSecretKey: "token"
+
+  # ...or, for a quick throwaway test, paste the token inline instead and delete
+  # the two `existingSecret` lines above:
+  # token: "<YOUR-ILERT-OTLP-INGEST-TOKEN>"
+
+# Two replicas so the ingest path survives a rollout or a lost node.
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi

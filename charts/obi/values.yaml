@@ -1,0 +1,164 @@
+# Default values for the obi chart.
+# -----------------------------------------------------------------------------
+# OBI (OpenTelemetry eBPF Instrumentation) is a DaemonSet that watches every
+# process on a node from the kernel using eBPF. It needs NO application changes,
+# NO sidecars and NO code — it produces OTLP traces for the HTTP/gRPC/SQL/…
+# calls your services make. Those traces are what ilert turns into the
+# **Service Health** topology (which service talks to which, and how healthy the
+# calls are).
+#
+# In the ilert reference setup OBI does NOT talk to ilert directly. It ships its
+# OTLP to a local collector (the `otel-collector` or `alloy` chart) which batches
+# the data and forwards it to the ilert OTLP gateway with your ingest token.
+# Keeping a collector in the middle gives you batching, retries and a single
+# place that holds the credential — so `otlpEndpoint` below points at that
+# in-cluster collector, not at ilert.
+# -----------------------------------------------------------------------------
+
+image:
+  repository: otel/ebpf-instrument
+  pullPolicy: IfNotPresent
+  # OBI image tag. OBI publishes tags with a leading "v".
+  # Releases: https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation/releases
+  tag: v0.10.0
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# -----------------------------------------------------------------------------
+# Where OBI sends its OTLP data.
+# -----------------------------------------------------------------------------
+# Point this at the collector you deploy alongside OBI. The default assumes the
+# `otel-collector` chart installed in the SAME namespace under the release name
+# `otel-collector`, exposing OTLP/HTTP on 4318. If you use the `alloy` chart or a
+# different release name, change the host accordingly, e.g.:
+#   http://alloy:4318            (alloy chart, release name "alloy")
+#   http://otel-collector:4318   (otel-collector chart, release name "otel-collector")
+#
+# We use OTLP/HTTP (4318) by default because it is the easiest to debug; the
+# collector also accepts gRPC on 4317 if you prefer (set the port to 4317).
+otlpEndpoint: "http://otel-collector:4318"
+
+# OBI log level: DEBUG, INFO, WARN, ERROR.
+logLevel: INFO
+
+# Overrides the Kubernetes cluster name stamped onto every span
+# (resource attribute k8s.cluster.name). Leave empty to let OBI auto-detect.
+# Setting this makes services easy to tell apart when you run multiple clusters.
+kubeClusterName: ""
+
+# -----------------------------------------------------------------------------
+# Discovery — WHICH processes OBI instruments.
+# -----------------------------------------------------------------------------
+# This is the most important setting. If `instrument` is empty, OBI runs in
+# network-only mode and instruments NO application processes, so you get no
+# traces and nothing appears in Service Health. Start by instrumenting the
+# namespace(s) that hold your applications.
+#
+# Each selector matches on any combination of the fields below (all optional):
+#   k8sNamespace, k8sPodName, k8sDeploymentName, openPorts, exePath
+# Glob patterns are supported for names/paths (e.g. "checkout-*").
+discovery:
+  # Processes to instrument. Empty = nothing is instrumented (see note above).
+  instrument:
+    - k8sNamespace: default
+  # Processes to explicitly exclude, merged on top of OBI's built-in excludes.
+  # Exclude the observability stack so OBI does not trace the collector/agents
+  # (avoids "observing the observers" and self-referential edges).
+  excludeInstrument: []
+  #  - k8sPodName: "otel-collector-*"
+  #  - k8sPodName: "alloy-*"
+
+# Protocols OBI decodes into spans. These spans are what create the service
+# topology, so keep at least http/grpc. Add sql/redis/kafka to also see the
+# databases and brokers your services depend on. Set to [] for metrics-only.
+tracesInstrumentations:
+  - http
+  - grpc
+  - sql
+  - redis
+  - kafka
+
+# OTLP metrics features OBI emits (RED + network). "application" gives per-service
+# request/error/duration metrics; "network" gives node-to-node flow metrics.
+metricsFeatures:
+  - network
+  - application
+
+# How OBI turns raw peer IPs into readable names in the topology.
+#   k8s  — resolve in-cluster IPs to pod/service names
+#   rdns — learn IP -> hostname from eBPF-captured DNS replies, so external
+#          peers (RDS, ElastiCache, third-party APIs) show as their hostname
+#          instead of a bare IP. Priority: k8s -> rdns -> dns.
+nameResolverSources:
+  - k8s
+  - rdns
+
+# -----------------------------------------------------------------------------
+# Security context.
+# -----------------------------------------------------------------------------
+# eBPF needs elevated privileges. The default is the LEAST-privilege mode:
+# specific Linux capabilities instead of full privileged. Only flip
+# `privileged: true` if your kernel/hardening blocks the fine-grained path.
+securityContext:
+  # Run the container as fully privileged. Prefer keeping this false.
+  privileged: false
+  # Capabilities used when privileged=false. These are the minimum OBI needs to
+  # attach eBPF programs, read process memory and inspect network traffic.
+  capabilities:
+    - BPF
+    - SYS_PTRACE
+    - NET_RAW
+    - NET_ADMIN
+    - CHECKPOINT_RESTORE
+    - DAC_READ_SEARCH
+    - PERFMON
+    - SYS_RESOURCE
+
+serviceAccount:
+  # Create a dedicated ServiceAccount (recommended).
+  create: true
+  annotations: {}
+  # Name to use; generated from the fullname template when empty.
+  name: ""
+
+# RBAC lets OBI read pods/services/nodes/replicasets to decorate spans with
+# Kubernetes metadata (namespace, workload, node). Required for Service Health
+# labels; disable only if you manage the ClusterRole yourself.
+rbac:
+  create: true
+
+# OBI must run on every node (it is node-local), so it tolerates all taints by
+# default. Narrow this if you only want to instrument specific node pools.
+tolerations:
+  - effect: NoSchedule
+    operator: Exists
+
+nodeSelector: {}
+affinity: {}
+podAnnotations: {}
+podLabels: {}
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Extra environment variables passed straight to the OBI container. Use for any
+# OTEL_EBPF_* tuning not exposed above.
+# See https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation
+extraEnv: []
+#  - name: OTEL_EBPF_BPF_BATCH_TIMEOUT
+#    value: "10s"
+
+# Update strategy for the DaemonSet.
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+
+priorityClassName: ""

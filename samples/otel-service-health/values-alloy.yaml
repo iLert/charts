@@ -1,0 +1,32 @@
+# ALTERNATIVE gateway: use this instead of values-otel-collector.yaml if your
+# team standardizes on Grafana Alloy. Functionally identical role.
+#
+# Install with:
+#   helm install alloy ilert/alloy \
+#     --namespace ilert-otel --create-namespace \
+#     -f values-alloy.yaml
+#
+# If you use this, point the OBI sample at Alloy instead of otel-collector:
+#   helm install obi ilert/obi -n ilert-otel \
+#     -f values-obi.yaml --set otlpEndpoint=http://alloy:4318
+
+ilert:
+  endpoint: "https://otlp.ilert.com:4318"
+
+  # Recommended: reference a pre-created Secret (see README step 2):
+  #   kubectl -n ilert-otel create secret generic ilert-otlp \
+  #     --from-literal=token='<YOUR-ILERT-OTLP-INGEST-TOKEN>'
+  existingSecret: "ilert-otlp"
+  existingSecretKey: "token"
+
+  # ...or paste inline for a throwaway test:
+  # token: "<YOUR-ILERT-OTLP-INGEST-TOKEN>"
+
+replicaCount: 2
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi

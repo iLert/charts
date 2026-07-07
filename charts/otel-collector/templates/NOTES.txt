@@ -1,0 +1,22 @@
+The OpenTelemetry Collector (ilert OTLP gateway) is installed.
+
+1. Check it is running:
+
+   kubectl --namespace {{ .Release.Namespace }} get pods -l "app={{ include "otel-collector.name" . }}"
+
+2. In-cluster clients (OBI, your apps) should send OTLP to:
+
+   OTLP/HTTP : http://{{ include "otel-collector.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.ports.otlpHttp }}
+   OTLP/gRPC : http://{{ include "otel-collector.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.ports.otlpGrpc }}
+
+   Within the same namespace you can use the short name
+   `{{ include "otel-collector.fullname" . }}:{{ .Values.ports.otlpHttp }}`.
+
+3. Traces are forwarded to: {{ .Values.ilert.endpoint }}
+
+4. Confirm the forwarder is healthy (no auth/connection errors):
+
+   kubectl --namespace {{ .Release.Namespace }} logs -l "app={{ include "otel-collector.name" . }}" --tail=50
+
+Now install the `obi` chart (or point your apps) at this collector, and your
+services will appear on the ilert Service Health page.

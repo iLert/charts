@@ -1,0 +1,116 @@
+# Default values for the otel-collector chart.
+# -----------------------------------------------------------------------------
+# This deploys the official OpenTelemetry Collector as a small **gateway**: a
+# Deployment + Service that OBI (and any OTLP client in the cluster) send to. The
+# collector batches the data and forwards traces to the ilert OTLP gateway, which
+# builds your Service Health topology.
+#
+# Data flow:
+#   OBI / app SDKs  --OTLP-->  this collector  --OTLP/HTTPS + Bearer-->  ilert
+#
+# We run it as a Deployment (not a DaemonSet) because it only forwards data — a
+# couple of replicas comfortably handle a whole cluster's traces, and a single
+# Service gives OBI one stable address to send to.
+# -----------------------------------------------------------------------------
+
+# === REQUIRED: your ilert OTLP ingest credentials =============================
+ilert:
+  # The OTLP ingest endpoint for your ilert region. This is ilert's public OTLP
+  # gateway; the collector appends the OTLP path (/v1/traces) itself.
+  #   EU / default : https://otlp.ilert.com:4318
+  endpoint: "https://otlp.ilert.com:4318"
+
+  # (REQUIRED) Your ilert OTLP ingest token. Create it in the ilert UI and paste
+  # it here (or, better, use `existingSecret` below to keep it out of values).
+  # The collector sends it as `Authorization: Bearer <token>`; ilert reads the
+  # tenant from the token, so no other tenant header is needed.
+  token: ""
+
+  # Instead of `token` above, reference a pre-created Secret. The Secret must
+  # contain a key holding the raw token. Recommended for real environments.
+  existingSecret: ""
+  existingSecretKey: "token"
+
+image:
+  repository: otel/opentelemetry-collector-contrib
+  pullPolicy: IfNotPresent
+  # Defaults to the chart appVersion when empty.
+  # We use the -contrib distribution so processors like k8sattributes and
+  # resourcedetection are available if you extend the pipeline.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Gateway sizing. Two replicas so a rollout or node loss never drops the ingest
+# path. Bump for very high trace volume.
+replicaCount: 2
+
+# The OTLP ports OBI and your apps connect to. The Service exposes both;
+# point OBI at 4318 (HTTP, easy to debug) or 4317 (gRPC, faster).
+ports:
+  otlpHttp: 4318
+  otlpGrpc: 4317
+
+service:
+  type: ClusterIP
+  annotations: {}
+
+# -----------------------------------------------------------------------------
+# Collector pipeline configuration.
+# -----------------------------------------------------------------------------
+# By default the whole config is generated from the settings above so you don't
+# have to touch it. The generated pipeline is:
+#
+#   receivers:  otlp (grpc + http)         <- OBI and app SDKs
+#   processors: memory_limiter, batch      <- protect memory, batch for efficiency
+#   exporters:  otlphttp/ilert             <- forward traces to ilert
+#
+# Only traces are forwarded to ilert, because Service Health topology is derived
+# from spans (client/producer calls). Metrics/logs pipelines are intentionally
+# omitted; add your own via `configOverride` if you also ship those elsewhere.
+config:
+  # memory_limiter guards the collector against OOM under trace bursts.
+  memoryLimiter:
+    checkInterval: 1s
+    limitPercentage: 80
+    spikeLimitPercentage: 25
+  # batch trades a little latency for far fewer, larger OTLP requests to ilert.
+  batch:
+    timeout: 5s
+    sendBatchSize: 8192
+
+# Advanced: replace the ENTIRE generated collector config with your own. When
+# set (non-empty), everything under `config:` above is ignored and this YAML is
+# used verbatim. Use `${env:ILERT_OTLP_TOKEN}` to reference the token secret.
+configOverride: {}
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 80
+
+podAnnotations: {}
+podLabels: {}
+podSecurityContext: {}
+securityContext: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Extra environment variables for the collector container.
+extraEnv: []
