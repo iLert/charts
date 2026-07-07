@@ -1,5 +1,29 @@
 apiVersion: v1
 entries:
+  alloy:
+  - apiVersion: v2
+    appVersion: 1.11.3
+    created: "2026-07-07T16:11:10.211951173Z"
+    description: Grafana Alloy, pre-configured as an ilert OTLP gateway. It receives
+      OTLP from OBI (and your app SDKs), batches it, and forwards traces to the ilert
+      OTLP ingest endpoint so they show up on the Service Health page. An alternative
+      to the otel-collector chart for teams already standardized on Alloy.
+    digest: 7a70b7faf9dcaafbe470415cf59c13c88ee25720c24af567a2eac2685001984c
+    home: https://docs.ilert.com
+    keywords:
+    - opentelemetry
+    - alloy
+    - grafana
+    - otlp
+    - service-health
+    - ilert
+    name: alloy
+    sources:
+    - https://github.com/grafana/alloy
+    type: application
+    urls:
+    - https://github.com/iLert/charts/releases/download/alloy-0.1.0/alloy-0.1.0.tgz
+    version: 0.1.0
   ilert-kube-agent:
   - apiVersion: v2
     appVersion: 2.0.1
@@ -121,4 +145,52 @@ entries:
     urls:
     - https://github.com/iLert/charts/releases/download/ilert-kube-agent-1.0.0/ilert-kube-agent-1.0.0.tgz
     version: 1.0.0
-generated: "2025-07-08T16:30:54.475340777Z"
+  obi:
+  - apiVersion: v2
+    appVersion: 0.10.0
+    created: "2026-07-07T16:11:10.387690154Z"
+    description: OpenTelemetry eBPF Instrumentation (OBI) for ilert. A zero-code,
+      kernel-level DaemonSet that auto-instruments every workload on a node and emits
+      OTLP traces used to build the ilert Service Health topology.
+    digest: 5858dab97d7b892558dbfef544c8496fa05bb229da7f90a6d12a2afc87e9db22
+    home: https://docs.ilert.com
+    keywords:
+    - opentelemetry
+    - ebpf
+    - obi
+    - tracing
+    - service-health
+    - ilert
+    name: obi
+    sources:
+    - https://github.com/open-telemetry/opentelemetry-ebpf-instrumentation
+    type: application
+    urls:
+    - https://github.com/iLert/charts/releases/download/obi-0.1.0/obi-0.1.0.tgz
+    version: 0.1.0
+  otel-collector:
+  - apiVersion: v2
+    appVersion: 0.156.0
+    created: "2026-07-07T16:11:10.6020224Z"
+    description: The official OpenTelemetry Collector, pre-configured as an ilert
+      OTLP gateway. It receives OTLP from OBI (and your app SDKs), batches it, and
+      forwards traces to the ilert OTLP ingest endpoint so they show up on the Service
+      Health page.
+    digest: 866af47607c650d756922efca59915a15719e7ce4155d991ce7f3f3c95ef2913
+    home: https://docs.ilert.com
+    keywords:
+    - opentelemetry
+    - otel
+    - collector
+    - otlp
+    - service-health
+    - ilert
+    name: otel-collector
+    sources:
+    - https://github.com/open-telemetry/opentelemetry-collector
+    - https://github.com/open-telemetry/opentelemetry-collector-contrib
+    type: application
+    urls:
+    - https://github.com/iLert/charts/releases/download/otel-collector-0.1.0/otel-collector-0.1.0.tgz
+    version: 0.1.0
+generated: "2026-07-07T16:11:10.602065634Z"
