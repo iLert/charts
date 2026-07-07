@@ -1,0 +1,122 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "obi.fullname" . }}
+  labels:
+    {{- include "obi.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "obi.selectorLabels" . | nindent 6 }}
+  updateStrategy:
+    {{- toYaml .Values.updateStrategy | nindent 4 }}
+  template:
+    metadata:
+      annotations:
+        # Roll the DaemonSet whenever the discovery config changes.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "obi.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "obi.serviceAccountName" . }}
+      automountServiceAccountToken: true
+      # eBPF programs attach to processes across the node, so OBI must share the
+      # host PID namespace to see them.
+      hostPID: true
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: obi
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- if .Values.securityContext.privileged }}
+            privileged: true
+            {{- else }}
+            runAsUser: 0
+            readOnlyRootFilesystem: true
+            capabilities:
+              add:
+                {{- toYaml .Values.securityContext.capabilities | nindent 16 }}
+              drop:
+                - ALL
+            {{- end }}
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.otlpEndpoint | quote }}
+            - name: OTEL_EBPF_KUBE_METADATA_ENABLE
+              value: "true"
+            - name: OTEL_EBPF_LOG_LEVEL
+              value: {{ .Values.logLevel | quote }}
+            {{- if .Values.kubeClusterName }}
+            - name: OTEL_EBPF_KUBE_CLUSTER_NAME
+              value: {{ .Values.kubeClusterName | quote }}
+            {{- end }}
+            # Only decorate spans with metadata for pods on the local node; keeps
+            # the informer cache small on large clusters.
+            - name: OTEL_EBPF_KUBE_META_RESTRICT_LOCAL_NODE
+              value: "true"
+            {{- if .Values.nameResolverSources }}
+            - name: OTEL_EBPF_NAME_RESOLVER_SOURCES
+              value: {{ join "," .Values.nameResolverSources | quote }}
+            {{- end }}
+            {{- if .Values.metricsFeatures }}
+            - name: OTEL_EBPF_METRICS_FEATURES
+              value: {{ join "," .Values.metricsFeatures | quote }}
+            {{- end }}
+            - name: OTEL_EBPF_CONFIG_PATH
+              value: /etc/obi/config.yaml
+            {{- if .Values.tracesInstrumentations }}
+            - name: OTEL_EBPF_TRACES_INSTRUMENTATIONS
+              value: {{ join "," .Values.tracesInstrumentations | quote }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            - name: obi-config
+              mountPath: /etc/obi
+              readOnly: true
+            {{- if not .Values.securityContext.privileged }}
+            - name: var-run-obi
+              mountPath: /var/run/obi
+            - name: cgroup
+              mountPath: /sys/fs/cgroup
+              readOnly: true
+            {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: obi-config
+          configMap:
+            name: {{ include "obi.fullname" . }}
+        {{- if not .Values.securityContext.privileged }}
+        - name: var-run-obi
+          emptyDir: {}
+        - name: cgroup
+          hostPath:
+            path: /sys/fs/cgroup
+        {{- end }}

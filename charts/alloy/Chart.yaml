@@ -1,0 +1,26 @@
+apiVersion: v2
+name: alloy
+description: >-
+  Grafana Alloy, pre-configured as an ilert OTLP gateway. It receives OTLP from
+  OBI (and your app SDKs), batches it, and forwards traces to the ilert OTLP
+  ingest endpoint so they show up on the Service Health page. An alternative to
+  the otel-collector chart for teams already standardized on Alloy.
+type: application
+
+# Chart version. Bump on every change to the chart or its templates.
+version: 0.1.0
+
+# Version of Grafana Alloy this chart deploys by default.
+# See https://github.com/grafana/alloy/releases
+appVersion: "1.11.3"
+
+home: https://docs.ilert.com
+sources:
+  - https://github.com/grafana/alloy
+keywords:
+  - opentelemetry
+  - alloy
+  - grafana
+  - otlp
+  - service-health
+  - ilert

@@ -1,0 +1,26 @@
+apiVersion: v2
+name: otel-collector
+description: >-
+  The official OpenTelemetry Collector, pre-configured as an ilert OTLP gateway.
+  It receives OTLP from OBI (and your app SDKs), batches it, and forwards traces
+  to the ilert OTLP ingest endpoint so they show up on the Service Health page.
+type: application
+
+# Chart version. Bump on every change to the chart or its templates.
+version: 0.1.0
+
+# Version of the OpenTelemetry Collector (contrib) this chart deploys.
+# See https://github.com/open-telemetry/opentelemetry-collector-releases/releases
+appVersion: "0.156.0"
+
+home: https://docs.ilert.com
+sources:
+  - https://github.com/open-telemetry/opentelemetry-collector
+  - https://github.com/open-telemetry/opentelemetry-collector-contrib
+keywords:
+  - opentelemetry
+  - otel
+  - collector
+  - otlp
+  - service-health
+  - ilert

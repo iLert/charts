@@ -1,0 +1,28 @@
+OBI (OpenTelemetry eBPF Instrumentation) is now installed as a DaemonSet.
+
+1. Check the pods are running on every node:
+
+   kubectl --namespace {{ .Release.Namespace }} get pods -l "app={{ include "obi.name" . }}"
+
+2. OBI is instrumenting these selectors:
+{{- range .Values.discovery.instrument }}
+   - {{ toYaml . | nindent 5 | trim }}
+{{- end }}
+{{- if not .Values.discovery.instrument }}
+
+   WARNING: `discovery.instrument` is empty. OBI will instrument NO application
+   processes and nothing will appear in Service Health. Set it, e.g.:
+
+     discovery:
+       instrument:
+         - k8sNamespace: default
+{{- end }}
+
+3. OBI ships OTLP to: {{ .Values.otlpEndpoint }}
+
+   Make sure a collector (the `otel-collector` or `alloy` chart) is reachable at
+   that address and is forwarding to the ilert OTLP gateway. Without it, traces
+   have nowhere to go.
+
+4. Within a few minutes your services and their dependencies should appear on
+   the ilert Service Health page.

@@ -1,0 +1,39 @@
+{{- /*
+OBI reads its discovery selectors from a config file. Values are authored in
+camelCase for a friendly Helm UX and mapped here to the snake_case keys OBI
+expects (k8s_namespace, k8s_pod_name, k8s_deployment_name, open_ports, exe_path).
+*/ -}}
+{{- define "obi.selector" -}}
+{{- if .k8sNamespace }}
+k8s_namespace: {{ .k8sNamespace | quote }}
+{{- end }}
+{{- if .k8sPodName }}
+k8s_pod_name: {{ .k8sPodName | quote }}
+{{- end }}
+{{- if .k8sDeploymentName }}
+k8s_deployment_name: {{ .k8sDeploymentName | quote }}
+{{- end }}
+{{- if .openPorts }}
+open_ports: {{ .openPorts | quote }}
+{{- end }}
+{{- if .exePath }}
+exe_path: {{ .exePath | quote }}
+{{- end }}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "obi.fullname" . }}
+  labels:
+    {{- include "obi.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    discovery:
+      instrument:
+      {{- range .Values.discovery.instrument }}
+        - {{ include "obi.selector" . | nindent 10 | trim }}
+      {{- end }}
+      exclude_instrument:
+      {{- range .Values.discovery.excludeInstrument }}
+        - {{ include "obi.selector" . | nindent 10 | trim }}
+      {{- end }}

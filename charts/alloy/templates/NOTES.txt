@@ -1,0 +1,24 @@
+Grafana Alloy (ilert OTLP gateway) is installed.
+
+1. Check it is running:
+
+   kubectl --namespace {{ .Release.Namespace }} get pods -l "app={{ include "alloy.name" . }}"
+
+2. In-cluster clients (OBI, your apps) should send OTLP to:
+
+   OTLP/HTTP : http://{{ include "alloy.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.ports.otlpHttp }}
+   OTLP/gRPC : http://{{ include "alloy.fullname" . }}.{{ .Release.Namespace }}:{{ .Values.ports.otlpGrpc }}
+
+   Within the same namespace you can use the short name
+   `{{ include "alloy.fullname" . }}:{{ .Values.ports.otlpHttp }}`.
+
+3. Traces are forwarded to: {{ .Values.ilert.endpoint }}
+
+4. Inspect Alloy (config graph, component health) and logs:
+
+   kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "alloy.fullname" . }} {{ .Values.ports.http }}:{{ .Values.ports.http }}
+   # then open http://localhost:{{ .Values.ports.http }}
+   kubectl --namespace {{ .Release.Namespace }} logs -l "app={{ include "alloy.name" . }}" --tail=50
+
+Now install the `obi` chart (or point your apps) at this gateway, and your
+services will appear on the ilert Service Health page.

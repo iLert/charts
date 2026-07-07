@@ -1,0 +1,35 @@
+# Sample values for the `obi` chart (zero-code eBPF instrumentation).
+#
+# Install with:
+#   helm install obi ilert/obi \
+#     --namespace ilert-otel --create-namespace \
+#     -f values-obi.yaml
+#
+# This assumes the otel-collector sample is installed in the SAME namespace under
+# the release name `otel-collector`.
+
+# Ship OTLP to the in-cluster collector Service (OTLP/HTTP on 4318).
+otlpEndpoint: "http://otel-collector:4318"
+
+# WHICH workloads to instrument. This is the setting that decides whether
+# anything shows up in Service Health. Replace `default` with the namespace(s)
+# that actually hold your applications; add more entries as needed.
+discovery:
+  instrument:
+    - k8sNamespace: default
+  # Don't instrument the observability stack itself.
+  excludeInstrument:
+    - k8sPodName: "otel-collector-*"
+    - k8sPodName: "obi-*"
+
+# Protocols decoded into spans. http/grpc build the service graph; sql/redis/kafka
+# make databases and brokers show up as dependencies too.
+tracesInstrumentations:
+  - http
+  - grpc
+  - sql
+  - redis
+  - kafka
+
+# Set this when you run more than one cluster, so services are easy to tell apart.
+# kubeClusterName: "prod-eu"
